@@ -143,7 +143,7 @@ export const processTweens = () => {
 
   while (tween) {
     const nextTween = tween._next;
-    processTween(tween, currentTime);
+    processTween(tween, tween._now ? tween._now() : currentTime);
     tween = nextTween;
   }
 };
@@ -281,7 +281,7 @@ export class Tweenable {
     }
 
     this._pausedAtTime = null;
-    this._timestamp = Tweenable.now();
+    this._timestamp = this._now ? this._now() : Tweenable.now();
     this._start(this.get(), _attachment);
     return this.resume();
   }
@@ -298,6 +298,7 @@ export class Tweenable {
     duration = DEFAULT_DURATION,
     easing,
     from,
+    now = undefined,
     promise = Promise,
     start = noop,
     step = noop,
@@ -320,6 +321,7 @@ export class Tweenable {
     this._currentState = { ...(from || this.get()) };
     this._originalState = this.get();
     this._targetState = { ...(to || this.get()) };
+    this._now = now;
 
     const { _currentState } = this;
     // Ensure that there is always something to tween to.
@@ -378,7 +380,7 @@ export class Tweenable {
       return;
     }
 
-    this._pausedAtTime = Tweenable.now();
+    this._pausedAtTime = this._now ? this._now() : Tweenable.now();
     this._isPlaying = false;
     remove(this);
 
@@ -399,7 +401,7 @@ export class Tweenable {
       return this._promise;
     }
 
-    const currentTime = Tweenable.now();
+    const currentTime = this._now ? this._now() : Tweenable.now();
 
     if (this._pausedAtTime) {
       this._timestamp += currentTime - this._pausedAtTime;
@@ -433,7 +435,7 @@ export class Tweenable {
    */
   seek(millisecond) {
     millisecond = Math.max(millisecond, 0);
-    const currentTime = Tweenable.now();
+    const currentTime = this._now ? this._now() : Tweenable.now();
 
     if (this._timestamp + millisecond === 0) {
       return this;
